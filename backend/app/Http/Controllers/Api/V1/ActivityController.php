@@ -94,6 +94,32 @@ class ActivityController extends Controller
         ]);
     }
 
+    public function complete(Request $request, string $id)
+    {
+        $activity = $request->user()
+            ->activities()
+            ->findOrFail($id);
+
+        if (
+            $activity->type !== ActivityType::OneTime ||
+            $activity->status !== ActivityStatus::Pending
+        ) {
+            return response()->json([
+                'message' => 'Somente atividades pontuais pendentes podem ser concluídas.',
+            ], 422);
+        }
+
+        $activity->status = ActivityStatus::Completed;
+        $activity->completed_at = now();
+
+        $activity->save();
+
+        return response()->json([
+            'message' => 'Atividade concluída com sucesso.',
+            'data' => new ActivityResource($activity),
+        ]);
+    }
+
     /**
      * Remove the specified resource from storage.
      */
